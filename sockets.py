@@ -120,6 +120,7 @@ def subscribe_socket(ws):
         while True:
             # block here
             msg = client.get()
+            # Update the world on the socket for new connections to get the current world state.
             update(msg)
             ws.send(msg)
     except Exception as e:# WebSocketError as e:
