@@ -59,3 +59,12 @@ Contributors
 * Mark Galloway
 * Abram Hindle
 * Cole Mackenzie
+
+References / Resources Used
+========================
+- https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/chat.py | Used lots of code from here to handle client websocket code
+- https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/static/chat.html | Similar reason as above on the frontend
+- https://gist.github.com/punchagan/53600958c1799c2dcf26 | Simple flask websocket example
+- https://riptutorial.com/html5-canvas/example/18135/stars | For drawing stars in a html canvas
+- https://mycolor.space/ | Gradient background css generator
+- https://stackoverflow.com/questions/2142535/how-to-clear-the-canvas-for-redrawing | Clearing a canvas instead of filling with a flat color
