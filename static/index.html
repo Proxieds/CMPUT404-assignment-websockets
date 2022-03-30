@@ -285,18 +285,20 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
-        // socket.send(JSON.stringify("socket opened"));
+        // Nothing here
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
     socket.onmessage = function(msg) {  ;
         try {
-            debug("WebSocket Recv:" + msg.data);
+            // In case there is existing data on the server, only show updates
+            msg.data.length > 300 ? debug("socket connected") : debug("WebSocket Recv:" + msg.data);
             parsed_data = JSON.parse(msg.data)
             response_ids = Object.keys(parsed_data)
             response_ids.forEach((id) => {
-                world[id] = parsed_data[id];
+                // Handles the case when the ids are nested in the data from loading the page with existing data
+                world[id] = parsed_data[id][id] || parsed_data[id];
             });
             // Draws the frames on the canvas on load
             renderFrame()

@@ -112,11 +112,15 @@ def subscribe_socket(ws):
        websocket and read updates from the websocket '''
     client = Client()
     clients.append(client)
-    g = gevent.spawn( read_ws, ws, client )    
+    g = gevent.spawn( read_ws, ws, client )
+    
+    # Send the current world state whenever there is a new connections
+    ws.send(json.dumps(world()))
     try:
         while True:
             # block here
             msg = client.get()
+            update(msg)
             ws.send(msg)
     except Exception as e:# WebSocketError as e:
         print("WS Error %s" % e)
@@ -141,10 +145,18 @@ def flask_post_json():
 @app.route("/entity/<entity>", methods=['POST','PUT'])
 def update(entity):
     '''update the entities via this interface'''
-    parsed_data = json.loads(request.data.decode('utf-8'))
-    parsed_entity = entity.strip()
-    for key, value in parsed_data.items():
-        myWorld.update(parsed_entity, key, value)
+    # Handles update from a post/put request
+    try:
+        parsed_data = json.loads(request.data.decode('utf-8'))
+        parsed_entity = entity.strip()
+        for key, value in parsed_data.items():
+            myWorld.update(parsed_entity, key, value)
+    # Handles update from the websocket update
+    except:
+        parsed_data = json.loads(entity)
+        parsed_entity = entity.strip()
+        for key, value in parsed_data.items():
+            myWorld.update(key, key, value)
     # Returns the entity after performing the update
     return myWorld.get(parsed_entity)
 
