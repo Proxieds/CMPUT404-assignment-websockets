@@ -26,6 +26,8 @@ app = Flask(__name__)
 sockets = Sockets(app)
 app.debug = True
 
+
+# Code used below was based on this example: https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/chat.py
 def send_all(msg):
     for client in clients:
         client.put( msg )
@@ -91,7 +93,6 @@ def hello():
     '''Return something coherent here.. perhaps redirect to /static/index.html '''
     return redirect('/static/index.html')
 
-# https://github.com/uofa-cmput404/cmput404-slides/blob/master/examples/WebSocketsExamples/chat.py
 def read_ws(ws,client):
     '''A greenlet function that reads from the websocket and updates the world'''
     try:
