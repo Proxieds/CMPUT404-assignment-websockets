@@ -21,18 +21,29 @@
         limitations under the License.
     "/>
     <script src="json2.js"></script>
+    <style>
+        body {
+            /* https://mycolor.space/ - Cool website for generating colors/gradients*/ 
+            background-image: linear-gradient(to right top, #243b55, #1c3155, #1c2753, #221a4e, #2a0845);
+        }
+        #debug {
+            color: #fff !important;
+            font-size: 1.3rem;
+        }
+    </style>
   </head> 
-  <body bgcolor="white" height="100%" width="100%"> 
+  <body height="100%" width="100%"> 
     <div id="debug"></div>
     <canvas id="c" width="100%" height="100%" style="-webkit-tap-highlight-color: transparent;"></canvas> 
 
     <script>
-      // Fix me
+// Fix me
 var canvas = document.getElementById('c');
 var host = window.location.host;
 var context = canvas.getContext("2d");
-var W = canvas.width  = window.innerWidth-6;
-var H = canvas.height = window.innerHeight-50;
+// Setting to the entire page window
+var W = canvas.width  = window.innerWidth;
+var H = canvas.height = window.innerHeight;
 var wscounter = 0;
 var socket;
 
@@ -45,17 +56,27 @@ debug("Test");
 world = {};
 
 //XXX: TODO Make this prettier!
-function drawCircle(context,entity) {
+// Drawing stars on the canvas
+// https://riptutorial.com/html5-canvas/example/18135/stars 
+function drawStar(context,entity) {
     with(context) {
         beginPath();                
-        lineWidth = 3;
+        lineWidth = 2;
         var x = entity["x"];
         var y = entity["y"];
-        //moveTo(x,y);
         fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+        points = 5;
+        for (var i=0; i < 2*points+1; i++) {
+            var r = (i%2 == 0)? entity['radius'] : entity['radius']/2;
+            var a = Math.PI * i/points;
+            lineTo(x + r*Math.sin(a), y + r*Math.cos(a));
+    };
+    closePath();
+    fill();                 
+    fillStyle=fill;
+    strokeStyle="#fff";
+    stroke()
+
     }
 }
 
@@ -72,8 +93,8 @@ function prepEntity(entity) {
 function clearFrame() {
     with(context) {
 	moveTo(0,0);
-	fillStyle = "#000";
-	fillRect(0,0,W,H);
+    // Using clearRect instead of applying a black fill color since the canvas is transparent
+    clearRect(0, 0, canvas.width, canvas.height);
     }
 
 }
@@ -83,7 +104,7 @@ function renderFrame() {
     clearFrame();
     for (var key in world) {
         var entity = world[key];
-        drawCircle(context,prepEntity(entity));
+        drawStar(context,prepEntity(entity));
     }
 }
 
@@ -122,9 +143,14 @@ function getPosition(e) {
 }
 
 function addEntity(entity, data) {
-    world[entity] = data;
-    drawNextFrame(); // (but should we?)
+    // console.log(entity);
+    // world[entity] = data;
+    // drawNextFrame(); // (but should we?)
+    // Omitting the lines above because it would only write local client changes and going to be doing the drawing in the ws.onMessage()
     //XXX: Send a XHTML Request that updates the entity you just modified!
+    new_obj = {}
+    new_obj[entity] = data;
+    socket.send(JSON.stringify(new_obj));
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -228,19 +254,25 @@ mouse = (function() {
     return self;
 })();
 
+function getRandomColour() {
+    // Returns a random colour index within the list of colours to draw circles with
+    var colours = ['#18DCFF', '#FF7AB0', '#75C069', '#FFB984', '#40F3D0', '#F9F871', '#5E9FF4', '#FF80AF', '#73C068', '#FB9038'];
+    return colours[Math.floor(Math.random() * colours.length)];
+}
+
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
+// Filling the circles and using random colours
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour': getRandomColour()});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
+    addEntityWithoutName({'x':x,'y':y,'colour': getRandomColour()});
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
-                          'radius':10});
+    addEntityWithoutName({'x':x,'y':y,'colour': getRandomColour(),'radius':10});
 });
 
 
@@ -248,20 +280,26 @@ function update() {
     drawFrame();
 }
 
-
 function wsSetup() {
     var url = "ws://"+host+"/subscribe";   
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        // socket.send(JSON.stringify("socket opened"));
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
     };
-    socket.onmessage = function(msg) {  
+    socket.onmessage = function(msg) {  ;
         try {
             debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            parsed_data = JSON.parse(msg.data)
+            response_ids = Object.keys(parsed_data)
+            response_ids.forEach((id) => {
+                world[id] = parsed_data[id];
+            });
+            // Draws the frames on the canvas on load
+            renderFrame()
         } catch (e) {
             alert("socket on message: " + e);
         }
@@ -269,7 +307,6 @@ function wsSetup() {
 }
 
 wsSetup();
-
 
 
 
